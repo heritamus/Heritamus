@@ -1,0 +1,23 @@
+<div class="login-wrapper">
+  <div class="login-background"></div>
+  <div class="login-card">
+    <router-outlet></router-outlet>
+    <hr />
+    <div class="langs center">
+      <p>{{ '_CHANGE_LANGUAGE_' | translate:lang }}</p>
+      <p>
+        <a (click)="selectLanguage('en', 'English');" [class.strong]="currentLanguage == 'English'">English</a> &bull;
+        <a (click)="selectLanguage('pt', 'Português');" [class.strong]="currentLanguage == 'Português'">Português</a>
+      </p>
+      <hr />
+      <p>
+        <a [href]="urls.project" target="_blank">{{ '_PROJECT_' | translate:lang }}</a> &bull;
+        <a [href]="urls.team" target="_blank">{{ '_TEAM_' | translate:lang }}</a> &bull;
+        <a [href]="urls.doc" target="_blank">{{ '_DOCUMENTATION_' | translate:lang }}</a>
+      </p>
+      <p>
+        <a [href]="urls.license" target="_blank">Copyright &copy; 2018 Heritamus</a>
+      </p>
+    </div>
+  </div>
+</div>

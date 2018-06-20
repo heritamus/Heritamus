@@ -1,0 +1,123 @@
+<div id="main">
+  <nav class="navbar menu navbar-fixed-top">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+              aria-expanded="false" aria-controls="navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li class="btn-group" dropdown>
+          <a dropdownToggle class="dropdown-toggle">
+            {{ '_FILE_' | translate:lang }} <span class="caret"></span>
+          </a>
+          <ul *dropdownMenu class="dropdown-menu" role="menu">
+            <li><a (click)="(graphID != null && graphID != 0) ? saveGraph() : void(0)"
+                   [ngClass]="(graphID != null && graphID != 0) ? '': 'disabled'"><span
+                class="fa fa-fw fa-lg fa-floppy-o" aria-hidden="true"></span> {{ '_SAVE_GRAPH_' | translate:lang }}</a>
+            </li>
+            <li><a (click)="(graphID != null && graphID != 0) ? publishGraph() : void(0)"
+                   [ngClass]="(graphID != null && graphID != 0) ? '': 'disabled'"><span
+                class="fa fa-fw fa-lg fa-newspaper-o" aria-hidden="true"></span> {{ '_PUBLISH_GRAPH_' | translate:lang
+              }}</a></li>
+            <li><a (click)="auth.loggedIn ? exportGraph() : void"
+                   [class.disabled]="!auth.loggedIn || !graphOpen">
+              <span class="fa fa-fw fa-lg fa-download" aria-hidden="true"></span>
+              {{ '_EXPORT_GRAPH_' | translate:lang }}</a></li>
+            <li role="separator" class="divider"></li>
+            <li><a (click)="graphID != null ? closeGraph() : void(0)" [ngClass]="graphID != null ? '': 'disabled'"><span
+                class="fa fa-fw fa-lg fa-times" aria-hidden="true"></span> {{ '_CLOSE_GRAPH_' | translate:lang }}</a>
+            </li>
+          </ul>
+        </li>
+        <li class="btn-group" dropdown>
+          <a dropdownToggle class="dropdown-toggle">
+            {{ '_HELP_' | translate:lang }} <span class="caret"></span>
+          </a>
+          <ul *dropdownMenu class="dropdown-menu" role="menu">
+            <li><a href="javascript:void(0);" class="version">Heritamus v{{ appVersion }}</a></li>
+            <li role="separator" class="divider"></li>
+            <li><a [href]="urls.helpCenter" target="_blank"><span
+                class="fa fa-fw fa-lg fa-life-ring" aria-hidden="true"></span> {{ '_HELP_CENTER_' | translate:lang
+              }}</a></li>
+            <li role="separator" class="divider"></li>
+            <li><a [href]="urls.newBug" target="_blank"><span
+                class="fa fa-fw fa-lg fa-bug" aria-hidden="true"></span> {{ '_REPORT_BUG_' | translate:lang }}</a></li>
+            <li><a [href]="urls.newSuggestion" target="_blank"><span
+                class="fa fa-fw fa-lg fa-lightbulb-o" aria-hidden="true"></span> {{ '_SEND_SUGGESTION_' | translate:lang
+              }}</a></li>
+            <li role="separator" class="divider"></li>
+            <li><a [href]="urls.contactMail" target="_blank">
+              <span class="fa fa-fw fa-lg fa-envelope" aria-hidden="true"></span>
+              {{ '_CONTACT_' | translate:lang }}</a></li>
+          </ul>
+        </li>
+      </ul>
+
+      <ul class="nav navbar-nav navbar-outlets">
+        <li class="btn-group" dropdown>
+          <a dropdownToggle class="dropdown-toggle">
+            <span class="fa fa-fw fa-lg fa-globe" aria-hidden="true"></span> <span class="current-language">{{ currentLanguage }}</span>
+            <span class="caret"></span>
+          </a>
+          <ul *dropdownMenu class="dropdown-menu" role="menu">
+            <li>
+              <a (click)="selectLanguage('en', 'English');">
+                <img
+                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAEhklEQVRIS72Ve0xTdxTHv6XQQnm0PARaqqUDHcpUGsFNIuB0bji2wES2hQAzcSBzMEccBnQREVHcNE5BEZk6F3STaSLZEDIngQ0xDWSTjNcYrBdsS8ujUKQ82lL2u/fyx5IluGToLzm5J7/v+Z3POfdxLgdPeXGecn48E4A96cKRmMMid2Mh+abpDkSj126OihLj8WurBidP3IHBMEa2efM8Om4Wt27vw3Di28ye1/VKxMedIh73H3VZ4Oa9BGkxAVj9oAYcsRg+OZnuNMBPn1ugdgoLgWvMVkzMcnHn+4egKB2R6OZmic1hb9Y2PD5fwgBc92TgzOka4tHHacgcJDIfbJEQrbsd3JA1cFq3FhwOR0pHyI4W1VLpqx3A7eyAS1wMuAFy1Na24ae77USmO7BD4fF3MHYkj+SagyjvCA7m3iCuDRyeABEvyhE50wc7nQ6uCbGkZDEulzciLS3CnwFERR2j4hI24nUZBz6tD2Afug7Or21GW6ceF0vrYDZP4/SZFIzlfMJ0ICo6iay9X8PeRYiUTVKs7FLC5ukFYUoCRiasuPmtEpWV91FXd5AFhIcXUAqFFCazPWIj/PGSSgl7Zyd4pSdDbbQhZ/91lF9KhSFzDwPwKD6P1F3lOPCKBOI/WsF7dTOcX96I+l96UXG1AY6OdmhrG0BDwwEWsH59PhUUJMbo6CSTIOPjaEQKxjE7Y4FzVDg0+gmIhI4Y2ZnE6J5fVcC+twfWYQN4y+Uw8IVobX2Eki+qGd3dXYCeHh2amvJZwMjYBMV35NO3d8E1HE/uL1let6oWjOOQrDPTZniKnFlAx4YNlJOHB2aNxoUJ/1HlCoWYIrlWNTaygN/Dwii+xYLZMfr9//+LKxLBzOfjBaWSBeiGRikngeCJmbVBgUyMpKvnibFTk5PwXeLOAmSyDymrlYPx8SnmYPGFdLyXGArr4DBMDffBk/jColBAs+I5Rvfr/gv6IROWy9xh/K6K0Sv7uMhMv8Dobm5O4JFBoFKVsACJJIOy2WwwTdiQe2g7crK3wlR9F+NHP4M2NBKbrlDQDpZCE+jPAnooSLw/gLLlGIKXCaBOz4FZ1Y97Ue8i78afsD0ehIODA9TqsyzAxyeVksvlpPIUhK71w9CnhbDV1eNhTDLSrvVhUEUqHi6DOmAZA5D29sPHazf4fBdUfJOON7YFw3ipAqZzX2LozR3I73FG071m6PWlLCA5uZQ6W5ZKpp4e2vezyEBxwdXAaBRdbsa0YYCEcDFouAiNXMp2oFLD2yONeGRUkEH8EZlTBUVvgdveCd3ufeAEr8Q51xAcP5Uy/x0YDBSvqQXGghMwbYnGYa0vaqua5x8kO00pdTG0q1awD7mjG/7STOLZEaMn/RQUiudRdmUnApe6QZd9GIbm3xD8czUDkHTtz9NM/liP3rgkHPpBi/5OFdmmJyktmxlAe9fnGAhVMABxCzkclD0P4M8XYoarmwsKCndge+wajN+ugXxXkh+dQUhsKTHRfORiXeiP6hENoEuly6Cvi7msJNnMM/knL2bV/8r1N+VxnRe1t0dBAAAAAElFTkSuQmCC">
+                English
+              </a>
+            </li>
+            <li>
+              <a (click)="selectLanguage('pt', 'Português');">
+                <img
+                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAADyklEQVRIS92V228UVRzHvzOzs/ftxV5gC0Y3CysJ4rZN1DZECbcILaUFSqCijxii0Rgf/CNIfPLBRF94IBKj4cEHQ0I0jYQskNCspDSw7dZibNkul3HZtnM7M+PvzEx3W6j4Ag96kl/O7Oye3+d8f7cV8JyX8Jz94/8BCGQ+OWS6oRJIENe0vK8Q+MOV6j9G06FvbNccWLRbDn8D9OYuytxdPPPRUPXYnn6ozEA4GEJIDkKWJIiCSCa4+6kZYzXAJpfcuDPaHcZg6wYsXYcVDuHm+R/xdu5iggOaxMPdygeDI3ioVenyXMWTqflmbPGp9eCpcGDTA2tM4PqZs+ibn2yuAd7dN4iqqfkAz1fYYUglNGxsYHjnHikoSQjPykgY0hMwDuBiLIKY0QjGvj+P/hrgULeyd/sOOPwchYN+io6ggeE2ERN3IpAiDMMlDaH7Msq9DC/8piF6dzXEoTM8gTz+Bj3nfxnFgTqgS9n+eg8c0UtyPGDh6x1/Ye7XIF6eiEHtkKGGHMRnLMxuVhF5VUPrOVKzUIe4CniYCKDTfiN3BQM1wFCX0pXNEoBuT4Bd6yr4+A0T4ukgWt4/hVubX4FuMGQfzKH8xZcwX7TBYktozkdWhWq5mnRCjefzODg/5edgsEvJbMlQiLwEf7ipDEmKIDOuoaHnJP5Y1wnbsrGhUoAz+hVaBQlaagHrv0vUADz+y4nW6O1E4TaGaoCDnUo6swmiHHABn2ZKmFYbcXTUhLXnPdxOb4VD5ZGaLSL50xkspRhYqork2YY6gKTXAJaFieIUDq8EtGxYDwS8EO1se4SyEMXnlzVkdr+FP/efhMYcpC+dQ/XSBUT36XiUY2jP1UPkxZ+MzmuOjUJ5HkfKRT9EA1mlMdkGSBwgoFk2cLqnhLGZdvTdWkRa2YYlWcJ07AYCuyS0bHsI57ME4vOk2F9uksk5ryKdrKA8wNEa4EBWibU3Uw4IQJXE+6y7aQl96SomC+1IFm0MlQyIVLZ6733oVwNIjofX7AUO0MgmqxUcWwkItlDCCCDwUnXj6aCVCq6zTcVLHQwn5nQYkwLkKaqsSnDtRvM7WaUQFdVFHK8B+l9TpKaYnwN/4D02yfM/V/5lVNCV/E7mCn43VIyUp70cyAOditgYhUAKwqEQggEZMhmfSxJ1Nld14fLCagA5cdyBx+vThmXSsDMNGJoOkz7PGBpGSn4fxI+8qQRoegp+o601rr+99hhgBc4bEx6LzyLG4TRdh+/cdBXEyahG3f1ZLn6jEgfwWuMlUa+5Z4Nh5Eb77/8n/w0FoKUo7Nq26gAAAABJRU5ErkJggg==">
+                Português
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li *ngIf="graphID == 0" class="btn-group">
+          <a (click)="applyFilter()">
+            <i class="fa fa-fw fa-lg fa-filter"></i> {{ '_REQUESTS_' | translate:lang }}
+          </a>
+        </li>
+        <li class="btn-group" dropdown>
+          <a dropdownToggle class="dropdown-toggle">
+            <span class="fa fa-fw fa-lg fa-user" aria-hidden="true"></span>
+            {{ '_CONNECTED_AS_' | translate:lang }} {{ username }}
+            <span class="caret"></span>
+          </a>
+          <ul *dropdownMenu class="dropdown-menu" role="menu">
+            <li *ngIf="auth.loggedIn"><a routerLink="/app/account">
+              <span class="fa fa-fw fa-lg fa-cog" aria-hidden="true"></span>
+              {{ '_SETTINGS_' | translate:lang }}</a></li>
+            <li role="separator" class="divider"></li>
+            <li *ngIf="auth.isAdmin"><a routerLink="/app/admin">
+              <span class="fa fa-fw fa-lg fa-database" aria-hidden="true"></span>
+              {{ '_ADMINISTRATION_AREA_' | translate:lang }}</a></li>
+            <li *ngIf="auth.isAdmin" role="separator" class="divider"></li>
+            <li *ngIf="auth.loggedIn"><a (click)="auth.logout()">
+              <span class="fa fa-fw fa-lg fa-sign-out" aria-hidden="true"></span>
+              {{ '_LOGOUT_' | translate:lang }}</a></li>
+            <li *ngIf="!auth.loggedIn"><a routerLink="/home/login">
+              <span class="fa fa-fw fa-lg fa-sign-out" aria-hidden="true"></span>
+              {{ '_LOGIN_' | translate:lang }}</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  <div class="flex-container">
+    <div class="flex-col flex-maximum">
+      <!--<div class="flex-minimum card toolbar"></div>-->
+      <div class="flex-maximum card draw-area scroll-overflow">
+        <router-outlet></router-outlet>
+      </div>
+    </div>
+  </div>
+</div>

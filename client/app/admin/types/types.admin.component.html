@@ -1,0 +1,41 @@
+<app-loading [condition]="isLoading"></app-loading>
+<app-loading [condition]="isLoading"></app-loading>
+
+<div class="col-sm-12">
+  <h4>
+    {{ '_CUSTOM_TYPES_TITLE_' | translate:lang }} : {{ types.length }}
+    <div class="btn-group float-right">
+      <button type="button" class="btn btn-default" [class.active]="filter == 'all'" (click)="filter = 'all'">All</button>
+      <button type="button" class="btn btn-default" [class.active]="filter == 'default'" (click)="filter = 'default'">Default</button>
+      <button type="button" class="btn btn-default" [class.active]="filter == 'accepted'" (click)="filter = 'accepted'">Accepted</button>
+      <button type="button" class="btn btn-default" [class.active]="filter == 'waiting'" (click)="filter = 'waiting'">Waiting</button>
+    </div>
+  </h4>
+  <table class="table table-bordered table-striped">
+    <thead class="thead-default">
+      <tr>
+        <th class="col-md-4">{{ '_NAME_' | translate:lang }}</th>
+        <th class="col-md-4">{{ '_TYPE_' | translate:lang }}</th>
+        <th class="col-md-2">{{ '_STATE_' | translate:lang }}</th>
+        <th class="col-md-2">{{ '_ACTIONS_' | translate:lang }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let type of types" [class.hidden]="filter != 'all' && filter != type.state">
+        <td>{{ type.name }}</td>
+        <td class="capitalize">{{ type.availability }}</td>
+        <td class="capitalize">{{ type.state }}</td>
+        <td>
+          <div class="btn-group" role="group">
+            <button *ngIf="type.state == 'waiting'" class="btn btn-sm btn-default" (click)="acceptType(type);">
+              <i class="fa fa-check"></i>
+            </button>
+            <button *ngIf="type.state != 'default'" class="btn btn-sm btn-danger" (click)="deleteType(type)">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

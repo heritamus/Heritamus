@@ -1,0 +1,121 @@
+<app-loading [condition]="isLoading"></app-loading>
+
+<div class="col-sm-12">
+  <h4>{{ '_AVAILABLE_REQUESTS_' | translate:lang }} : {{requests.length}}<button (click)="createRequest(); addRequestModal.show()" class="leave-page btn btn-primary">Add a request</button></h4>
+  <div class="alert alert-danger"><p>{{ '_WARNING_FILTER_' | translate:lang }}</p></div>
+  <!--<div class="alert alert-danger"><p>{{ '_WARNING2_FILTER_' | translate:lang }}</p></div>-->
+  <table class="table table-bordered table-striped">
+    <thead class="thead-default">
+      <tr>
+        <th class="col-md-1">{{ '_NAME_' | translate:lang }}</th>
+        <th class="col-md-9">{{ '_REQUEST_CYPHER_' | translate:lang }}</th>
+        <th class="col-md-2">{{ '_ACTIONS_' | translate:lang }}</th>
+      </tr>
+    </thead>
+    <tbody *ngIf="requests.length === 0">
+      <tr>
+        <td colspan="4">{{ '_NO_REQUEST_' | translate:lang }}</td>
+      </tr>
+    </tbody>
+    <tbody *ngIf="requests.length > 0">
+      <tr *ngFor="let request of requests">
+        <td>{{request.name}}</td>
+        <td class="align-text-left">
+          <p><strong>{{ '_REQUEST_' | translate:lang }}:</strong></p>
+          <pre>{{request.request}}</pre>
+          <p><strong>{{ '_HELP_' | translate:lang }}:</strong></p>
+          <pre>{{request.help}}</pre>
+        </td>
+        <td>
+          <div class="btn-group" role="group">
+            <button class="btn btn-sm btn-default" (click)="renderCypherAsForm(request); playRequestModal.show();">
+              <i class="fa fa-play"></i>
+            </button>
+            <button class="btn btn-sm btn-default" (click)="editRequest(request); addRequestModal.show();">
+              <i class="fa fa-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" (click)="deleteRequest(request)">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div bsModal #addRequestModal="bs-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addRequestModal" aria-hidden="true">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header modal-header-normal">
+          <h4 class="modal-title pull-left">{{ '_ADD_REQUEST_' | translate:lang }}</h4>
+          <button type="button" id="addRequestModalCloseBtn" class="close pull-right" (click)="addRequestModal.hide()" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="alert alert-danger" *ngIf="msg != ''" role="alert"><strong>{{ '_ERROR_' | translate:lang }}</strong>: {{msg}}</div>
+              <div class="form-group">
+                <label for="requestName">{{ '_REQUEST_NAME_' | translate:lang }}:</label>
+                <input [ngModel]="currentReq.name" formControlName="name" name="requestName" type="text" placeholder="Your request name" class="form-control">
+              </div>
+              <div class="form-group">
+                <label for="requestCypher">{{ '_REQUEST_CYPHER_QUERY_' | translate:lang }}:</label>
+                <textarea [ngModel]="currentReq.request" formControlName="request" name="requestCypher" class="form-control" rows="5"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="requestHelp">{{ '_REQUEST_HELP_' | translate:lang }}:</label>
+                <textarea [ngModel]="currentReq.help" formControlName="help" name="requestHelp" class="form-control" rows="5"></textarea>
+              </div>
+              <div class="buttons-submit-modal">
+                <button *ngIf="currentReq._id == null" type="submit" [disabled]="!form.valid" class="btn btn-success">{{ '_CREATE_' | translate:lang }}</button>
+                <button *ngIf="currentReq._id != null" type="submit" [disabled]="!form.valid" class="btn btn-success">{{ '_SAVE_' | translate:lang }}</button>
+              </div>
+            </div>
+            <div class="col-md-4 helper-right">
+              <p><strong>{{ '_REQUEST_HELP_' | translate:lang }}:</strong></p>
+              <p>{{ '_REQUEST_HELP_LINE_1_' | translate:lang }}</p>
+              <p>{{ '_REQUEST_HELP_LINE_2_' | translate:lang }}</p>
+              <p><strong>{{ '_REQUEST_HELP_EXAMPLE_' | translate:lang }}:</strong></p>
+              <p>&bull; {{ '_REQUEST_HELP_EXAMPLE_CYPHER_FIELD_' | translate:lang }}:</p>
+              <pre>MATCH (p:Person {{'{name:"$1"}'}})</pre>
+              <p>&bull; {{ '_REQUEST_HELP_EXAMPLE_HELP_FIELD_' | translate:lang }}:</p>
+              <pre>Select persons called $1</pre>
+              <p>&bull; {{ '_REQUEST_HELP_EXAMPLE_RENDER_FIELD_' | translate:lang }}:</p>
+              <pre>Select persons called _______</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div bsModal #playRequestModal="bs-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="playRequestModal" aria-hidden="true">
+  <div *ngIf="currentReq != null" class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header modal-header-normal">
+        <h4 class="modal-title pull-left">{{ '_REQUEST_PLAY_' | translate:lang }} {{currentReq.name}}</h4>
+        <button type="button" id="addRequestModalCloseBtn" class="close pull-right" (click)="playRequestModal.hide()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p><strong>{{ '_REQUEST_YOUR_RENDER_' | translate:lang }}:</strong></p>
+        <div class="well generated-request">
+          <span *ngFor="let h of helps; let i = index">
+            {{h.sentence}}
+            <input type="text" class="form-control request-parameter" id="requestParameter{{h.id}}">
+          </span>
+        </div>
+        <p class="generated-execute">
+          <button type="button" (click)="execRequest()" class="btn btn-primary">{{ '_REQUEST_EXECUTE_' | translate:lang }}</button>
+        </p>
+      </div>
+      <div *ngIf="response != ''" class="modal-body generated-request-results">{{response}}</div>
+    </div>
+  </div>
+</div>

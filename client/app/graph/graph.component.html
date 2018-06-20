@@ -1,0 +1,785 @@
+<app-toast [message]="toast.message"></app-toast>
+
+<div *ngIf="graphOpen">
+  <div class="search-main">
+    <div class="search-node inner-addon left-addon" (click)="showResultDiv()">
+      <i class="fa fa-fw fa-lg fa-search"></i>
+      <input id="searchNode" (keyup)="searchElement()" type="text"
+             placeholder="{{ '_SEARCH_NODE_' | translate:lang }}"/>
+    </div>
+    <div>
+        <button class="btn btn-primary btn-center"
+                (click)="showCenterGraph()">&nbsp;&nbsp;&nbsp;{{ '_SHOW_CENTER_GRAPH_' | translate:lang }}
+          <span class="glyphicon glyphicon-screenshot align-left" aria-hidden="true" style="padding-top:2.5px;"></span>
+        </button>
+    </div>
+    <div class="search-results">
+      <div *ngIf="searchTerms == ''">
+        <p class="center">{{ '_SEARCH_NODE_DETAILS_' | translate:lang }}.</p>
+        <div class="center" *ngIf="mostUsedNodes.length > 0">
+          <hr/>
+          <strong>{{ mostUsedNodes.length }} {{ '_MOST_CONNECTED_NODES_' | translate:lang }}</strong>
+          <br/><br/>
+          <span *ngFor="let node of mostUsedNodes" (click)="addExistingNodeToGraph(node)"><a>{{ node.name }} ({{ getType(node) }})</a><br/></span>
+        </div>
+      </div>
+      <div class="center" *ngIf="searchTerms != '' && searchProgress">{{ '_SEARCHING_' | translate:lang }} <strong>"{{
+        searchTerms }}"</strong> {{ '_INTO_NODES_' | translate:lang }}...
+      </div>
+      <div *ngIf="searchTerms != '' && !searchProgress">
+        {{ results.length }} <span *ngIf="results.length <= 1">{{ '_RESULT_' | translate:lang }}</span><span
+          *ngIf="results.length > 1">{{ '_RESULTS_' | translate:lang }}</span> {{ '_FOR_' | translate:lang }} <strong>"{{
+        searchTerms }}"</strong>:
+        <br/><br/>
+        <p class="center" *ngIf="results.length == 0">
+          {{ '_NO_RESULTS_' | translate:lang }}.
+          <span *ngIf="graphID != 0">
+            <br/><br/>
+            <button class="btn btn-primary"
+                    (click)="addingNewNode()">{{ '_CREATE_NEW_NODE_' | translate:lang }}</button>
+          </span>
+        </p>
+        <div *ngIf="results.length > 0">
+          <ul class="search-results-list">
+            <li *ngFor="let node of results" (click)="addExistingNodeToGraph(node)"><a>{{ node.name }} ({{ getType(node)
+              }})</a></li>
+          </ul>
+          <div *ngIf="graphID != 0">
+            <hr/>
+            <p class="center">
+              {{ '_CANT_FIND_NODE_' | translate:lang }}
+              <br/><br/>
+              <button class="btn btn-primary" (click)="addingNewNode()">{{ '_CREATE_NEW_NODE_' | translate:lang }}
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="helperD3"
+       *ngIf="newGraphHelp"
+       [innerHTML]="'_CREATE_GRAPH_HELP_' | translate:lang">
+  </div>
+
+  <div id="neo4jd3" (click)="hideResultDiv()">
+    <p *ngIf="displayErrorMessage">{{ "_GRAPH_ERROR_LOADING_" | translate:lang }}</p>
+    <d3-graph style="width: inherit; height: inherit;"
+              (onNodeDoubleClick)="showNodeEditor($event)"
+              (onLinkDoubleClick)="showRelEditor($event)"
+              (onNewLinkDrawn)="createLink($event)"
+              (onSelectionClear)="closeNodeEditor()"
+              (onSelectionClear)="closeRelEditor()"></d3-graph>
+
+    <div *ngIf="currentSelectedNode !== null && !modalNode" class="details-node">
+
+      <button type="button" class="close pull-right" (click)="currentSelectedNode = null" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <h2>{{ currentSelectedNode.name }}</h2>
+      <hr>
+
+      <div>
+        <table class="table table-hover">
+          <tbody>
+          <tr *ngFor="let prop of currentSelectedNode.props">
+            <td style="width: 126px;">{{prop.nameProp}} :</td>
+            <td *ngIf="!prop.value.includes(',') && prop.value.startsWith('http')">
+              <a [href]="sanitize(prop.value)"
+                 target="_blank">{{prop.value}}</a>
+            </td>
+            <td *ngIf="prop.type == 'Url' && prop.value.includes(',')">
+              <a *ngFor="let link of prop.value.split(',')"
+                 [href]="sanitize(link)"
+                 target="_blank">{{link}}</a>
+            </td>
+            <td *ngIf="prop.type != 'Url' && !prop.value.startsWith('http')">{{prop.value}}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div *ngIf="!inPersonalGraph()">
+          <hr>
+
+          <div class="row">
+              <div class="col-lg-offset-2 col-lg-3" style="width:28%;padding-top:7px;padding-left:0px;padding-right:0px;">
+                  <label id="labelNbNodesToStartEdit" for="nbNodesToStart">{{ '_DEGREES_OF_SEPARATION_' | translate:lang
+                      }} :</label>
+              </div>
+              <div class="col-lg-2" style="padding-left:0px;padding-right:0px;">
+                  <select [ngModel]="degreesOfSeparation"
+                          id="nbNodesToStartEdit"
+                          class="form-control"
+                          (ngModelChange)="onChangeDegrees($event)">
+                      <option [ngValue]="i" *ngFor="let i of degreesOptions">{{ i }}</option>
+                  </select>
+              </div>
+              <div class="col-lg-1" style="width:7%;padding-top:9px;padding-left:15px;padding-right:0px;">
+                <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
+              </div>
+              <div class="col-lg-3" style="padding-left:0px;padding-right:2px;">
+                  <a class="btn btn-info"
+                     (click)="showGeneralGraph(currentSelectedNode)">{{ '_BROWSE_FROM_NODE_' | translate:lang }}</a>
+              </div>
+          </div>
+      </div>
+
+      <div *ngIf="inPersonalGraph()">
+        <hr>
+        <p class="text-right">
+          <a class="btn btn-default" *ngIf="user.role == 'admin' || currentSelectedNode.origin != 0"
+             (click)="editNodeForm(currentSelectedNode)">{{ '_EDIT_NODE_' | translate:lang }}</a>
+          <a class="btn btn-danger" (click)="deleteNodeFromGraph(currentSelectedNode)">{{ '_DELETE_NODE_' |
+            translate:lang }}</a>
+        </p>
+      </div>
+    </div>
+
+    <div *ngIf="currentSelectedRel !== null && !modalRelEdit" class="details-relation">
+      <button type="button" class="close pull-right" (click)="currentSelectedRel = null" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+
+      <h2>{{ '_RELATION_' | translate:lang }}</h2>
+      <table class="table table-hover">
+        <tbody>
+        <tr>
+          <th>{{ '_TYPE_' | translate:lang }}</th>
+        </tr>
+        <tr>
+          <td>{{currentSelectedRel.type}}</td>
+        </tr>
+        <tr>
+          <th style="border-top: 0px;">{{ '_COMMENT_' | translate:lang }}</th>
+        </tr>
+        <tr>
+          <td>{{currentSelectedRel.properties.comment}}</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="inPersonalGraph()">
+        <hr>
+        <p class="text-right">
+          <a class="btn btn-default" *ngIf="user.role == 'admin'"
+             (click)="editRelForm(currentSelectedRel)">{{ '_EDIT_RELATION_' | translate:lang }}</a>
+          <a class="btn btn-danger" (click)="deleteRelFromGraph(currentSelectedRel)">{{ '_DELETE_RELATION_' |
+            translate:lang }}</a>
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <div *ngIf="modalNode || modalRel || filtersOpen || modalPublish || modalExport" class="modal-bg"></div>
+
+  <div *ngIf="modalPublish" class="modal modal-open" tabindex="-1" role="dialog" aria-labelledby="modalPublish"
+       aria-hidden="true">
+    <form [formGroup]="formPublishGraph" (ngSubmit)="publishGraphRevision()">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title pull-left">{{ '_PUBLISH_SETTINGS_' | translate:lang }}</h4>
+            <button type="button" class="close pull-right" (click)="modalPublish = false" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="alert alert-info">{{ '_CONFIRM_PUBLISHING_' | translate:lang }}</div>
+                <div class="form-group">
+                  <label for="publishMessage">{{ '_PUBLISH_MESSAGE_' | translate:lang }}:</label>
+                  <textarea [(ngModel)]="publishMessage" type="text" formControlName="publishMessage"
+                            class="form-control" id="publishMessage"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer text-right">
+            <button type="submit" class="btn btn-success">{{ '_PUBLISH_REVISION_' | translate:lang }}</button>
+            <a class="btn btn-default" (click)="modalPublish = false">{{ '_CLOSE_' | translate:lang }}</a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="modalExport" class="modal modal-open" tabindex="-1" role="dialog" aria-labelledby="modalExport"
+       aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title pull-left">{{ '_EXPORT_GRAPH_' | translate:lang }}</h4>
+          <button type="button" class="close pull-right" (click)="modalExport = false" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-12">
+              <p>{{ '_CHOOSE_EXPORT_FORMAT_' | translate:lang }}:</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 center">
+              <button class="btn btn-export"
+                      [class.btn-default]="exportFormat !== 'json'"
+                      [class.btn-primary]="exportFormat === 'json'"
+                      name="exportFormat"
+                      (click)="exportFormat = 'json'">
+                JSON
+              </button>
+            </div>
+            <div class="col-md-6 center">
+              <button class="btn btn-export"
+                      [class.btn-default]="exportFormat !== 'xml'"
+                      [class.btn-primary]="exportFormat === 'xml'"
+                      name="exportFormat"
+                      (click)="exportFormat = 'xml'">
+                XML
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer text-right">
+          <a (click)="exportSubmit()" class="btn btn-success">{{ '_CREATE_EXPORT_FILE_' | translate:lang }}</a>
+          <a class="btn btn-default" (click)="modalExport = false">{{ '_CLOSE_' | translate:lang }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="modalNode" class="modal modal-open" tabindex="-1" role="dialog" aria-labelledby="addingNodeModal"
+       aria-hidden="true">
+    <form [formGroup]="formEditNode" (ngSubmit)="onSubmitEditNode()">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title pull-left" *ngIf="state == 'edit'">{{ '_NODE_EDITION_' | translate:lang }}</h4>
+            <h4 class="modal-title pull-left" *ngIf="state == 'creation'">{{ '_NODE_CREATION_' | translate:lang }}</h4>
+            <button type="button" class="close pull-right" (click)="modalNode = false" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="alert alert-danger" *ngIf="msg != ''" role="alert"><strong>{{ '_ERROR_' | translate:lang
+                  }}</strong>: {{msg}}
+                </div>
+                <div class="form-group">
+                  <label for="nodeName">{{ '_NODE_NAME_' | translate:lang }}:</label>
+                  <input type="text" formControlName="name" class="form-control" id="nodeName"
+                         placeholder="{{ '_NODE_NAME_' | translate:lang }}">
+                </div>
+              </div>
+            </div>
+            <hr/>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="nodeType">{{ '_NODE_TYPE_' | translate:lang }}:</label>
+                  <select *ngIf="language == 'en'" formControlName="type" class="form-control" id="nodeType">
+                    <option *ngFor="let n of sorted(nodePremadeType, 'en')" [value]="n.en">{{ n.en }}</option>
+                  </select>
+                  <select *ngIf="language == 'pt'" formControlName="type" class="form-control" id="nodeTypePt">
+                    <option *ngFor="let n of sorted(nodePremadeType, 'pt')" [value]="n.en">{{ n.pt }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="formEditNode.controls['type'].value === 'Custom'">
+              <hr/>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="customTypeName">{{ '_NODE_CUSTOM_TYPE_' | translate:lang }}:</label>
+                    <input type="text" formControlName="cntype" class="form-control" id="customTypeName"
+                           placeholder="{{ '_NODE_CUSTOM_TYPE_' | translate:lang }}">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-header">
+            <h4 class="modal-title pull-left">{{ '_NODE_PROPERTIES_' | translate:lang }}</h4>
+            <a (click)="addProperty()" class=" pull-right btn btn-info"><span class="fa fa-plus"></span> {{
+              '_ADD_PROPERTY_' | translate:lang }}</a>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <table class="table table-hover">
+                <thead>
+                <tr>
+                  <th class="col-sm-4 text-center">{{ '_TYPE_' | translate:lang }}</th>
+                  <th class="col-sm-3 text-center">{{ '_NAME_' | translate:lang }}</th>
+                  <th class="col-sm-3 text-center">{{ '_VALUE_' | translate:lang }}</th>
+                  <th class="col-sm-2 text-center">{{ '_ACTIONS_' | translate:lang }}</th>
+                </tr>
+                </thead>
+                <tbody formArrayName="props" class="props">
+                <tr *ngFor="let prop of propsArray.controls; let i=index" [formGroupName]="i">
+                  <td class="form-group" [class.has-error]="prop.get('type').touched && prop.get('type').invalid">
+                    <select #select formControlName="type" class="form-control" id="type">
+                      <option *ngFor="let t of availableTypes" [ngValue]="t">{{ t }}</option>
+                    </select>
+                  </td>
+                  <td class="form-group"
+                      [class.has-error]="prop.get('nameProp').touched && prop.get('nameProp').invalid">
+                    <input formControlName="nameProp" id="nameProp" type="text" class="form-control" required>
+                  </td>
+                  <td class="form-group">
+                    <input formControlName="value" id="valueEdit" type="text" class="form-control"
+                           [pattern]="getPattern(select)" required>
+                  </td>
+                  <td class="text-center">
+                    <button (click)="removeProp(i)" [disabled]="propsArray.length == 0"
+                            class="btn btn-danger remove-prop"><i class="fa fa-remove"></i></button>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="modal-footer text-right">
+            <button *ngIf="state == 'edit'" type="submit" [disabled]="formEditNode.invalid" class="btn btn-success">{{
+              '_SAVE_CHANGE_' | translate:lang }}
+            </button>
+            <button *ngIf="state == 'creation'" type="submit" class="btn btn-success">{{ '_CREATE_' | translate:lang
+              }}
+            </button>
+            <a class="btn btn-default" (click)="modalNode = false">{{ '_CLOSE_' | translate:lang }}</a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="modalRel" class="modal modal-open" tabindex="-1" role="dialog" aria-labelledby="addingRelModal"
+       aria-hidden="true">
+    <form [formGroup]="formCreateRel" (ngSubmit)="onSubmitCreateRel()">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4 class="modal-title pull-left">{{ '_RELATION_CREATION_' | translate:lang }}</h4>
+            <button type="button" class="close pull-right" (click)="modalRel = false" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="relaType">{{ '_RELATION_TYPE_' | translate:lang }}:</label>
+                  <select *ngIf="language == 'en'"
+                          [(ngModel)]="currentRelation.type"
+                          formControlName="rela"
+                          class="form-control"
+                          id="relaType">
+                    <option *ngFor="let r of sorted(relationPremadeType, 'en')"
+                            [value]="r.en">{{ r.en }}
+                    </option>
+                  </select>
+                  <select *ngIf="language == 'pt'"
+                          [(ngModel)]="currentRelation.type"
+                          formControlName="rela"
+                          class="form-control"
+                          id="relaType1">
+                    <option *ngFor="let r of sorted(relationPremadeType, 'pt')"
+                            [value]="r.en">{{ r.pt }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="currentRelation.type == 'Custom'" class="row pt-1">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="customTypeRelationName">{{ '_RELATION_CUSTOM_TYPE_' | translate:lang }}:</label>
+                  <input type="text"
+                         [(ngModel)]="customRelationType"
+                         formControlName="crtype"
+                         class="form-control"
+                         id="customTypeRelationName"
+                         placeholder="{{ '_RELATION_CUSTOM_TYPE_' | translate:lang }}"
+                         required
+                         minlength="3">
+                </div>
+              </div>
+            </div>
+            <div class="row pt-1">
+              <div class="col-md-12">
+                <div class="form-group">
+                  <label for="comment">{{ '_COMMENT_' | translate:lang }}</label>
+                  <textarea type="text"
+                            [(ngModel)]="currentRelation.comment"
+                            formControlName="comment"
+                            class="form-control"
+                            id="comment"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer text-right">
+            <button *ngIf="state == 'edit'"
+                    type="submit"
+                    class="btn btn-success"
+                    [disabled]="formCreateRel.invalid">{{ '_SAVE_CHANGE_' | translate:lang }}
+            </button>
+            <button *ngIf="state == 'creation'"
+                    type="submit"
+                    class="btn btn-success"
+                    [disabled]="formCreateRel.invalid">{{ '_CREATE_' | translate:lang }}
+            </button>
+            <a class="btn btn-default" (click)="modalRel = false">{{ '_CLOSE_' | translate:lang }}</a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="modalRelEdit" class="modal modal-open" tabindex="-1" role="dialog" aria-labelledby="addingRelModal"
+       aria-hidden="true">
+    <form [formGroup]="formEditRel" (ngSubmit)="onSubmitEditRelation()">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close pull-right" (click)="modalRelEdit = false" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h2>{{ '_RELATION_EDITION_' | translate:lang }}</h2>
+          </div>
+
+          <table class="table table-hover">
+            <tbody>
+            <tr>
+              <th style="border-top: 0px;">{{ '_TYPE_' | translate:lang }}</th>
+            </tr>
+            <tr>
+              <td style="border-top: 0px;">
+                <select *ngIf="language == 'en'"
+                        formControlName="type"
+                        class="form-control"
+                        id="relaTypeEdit">
+                  <option *ngFor="let r of sorted(relationPremadeType, 'en')"
+                          [value]="r.en">{{ r.en }}
+                  </option>
+                </select>
+                <select *ngIf="language == 'pt'"
+                        formControlName="type"
+                        class="form-control"
+                        id="relaType1Edit">
+                  <option *ngFor="let r of sorted(relationPremadeType, 'pt')"
+                          [value]="r.en">{{ r.pt }}
+                  </option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td *ngIf="formEditRel.controls['type'].value == 'Custom'">
+                <label for="customTypeRelationName">{{ '_RELATION_CUSTOM_TYPE_' | translate:lang }}:</label>
+                <input type="text"
+                       formControlName="crtype"
+                       class="form-control"
+                       id="customTypeRelationNameEdit"
+                       placeholder="{{ '_RELATION_CUSTOM_TYPE_' | translate:lang }}"
+                       required
+                       minlength="3">
+              </td>
+            </tr>
+            </tbody>
+          </table>
+
+          <table class="table table-hover">
+            <tbody>
+            <tr>
+              <th style="border-top: 0px;">{{ '_COMMENT_' | translate:lang }}</th>
+            </tr>
+            <tr style="background-color: transparent;">
+              <td style="border-top: 0px;">
+                      <textarea type="text"
+                                formControlName="comment"
+                                class="form-control"
+                                id="commentRel"></textarea>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+
+          <div class="modal-footer text-right">
+            <button type="submit" [disabled]="formEditRel.invalid" class="btn btn-success">{{'_SAVE_CHANGE_' | translate:lang }}
+            </button>
+            <a class="btn btn-default" (click)="modalRelEdit = false">{{ '_CLOSE_' | translate:lang }}</a>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="filtersOpen" class="modal modal-open" tabindex="-1" role="dialog" aria-labelledby="filtersSelection"
+       aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title pull-left">{{ '_FILTER_SELECTION_' | translate:lang }}</h4>
+          <button type="button" class="close pull-right" (click)="filtersOpen = false" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div *ngFor="let r of requests" class="col-md-12">
+              <div class="well well-sm radio no-margin-bottom">
+                <label>
+                  <input type="radio" name="selectFilter" (click)="selectFilter(r)" value="{{ r.name }}">
+                  {{ r.name }}
+                </label>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="currentFilter != null" class="row">
+            <hr>
+            <div class="col-md-12">
+              <p>{{ '_COMPLETE_FILTER_' | translate:lang }}</p>
+            </div>
+            <div class="well generated-request col-md-12">
+              <span *ngFor="let h of helps; let i = index">
+                {{h.sentence}}
+                <input type="text" class="form-control request-parameter" id="requestParameter{{h.id}}">
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer text-right">
+          <button (click)="applySelectedFilter()" type="submit" class="btn btn-success">{{ '_APPLY_FILTER_' |
+            translate:lang }}
+          </button>
+          <!--<button (click)="removeFilter()" type="submit" class="btn btn-warning">{{ '_REMOVE_FILTER_' | translate:lang-->
+            <!--}}-->
+          <!--</button>-->
+          <a class="btn btn-default" (click)="filtersOpen = false">{{ '_CLOSE_' | translate:lang }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="graphDrawing" class="modal modal-open graph-drawing"
+       tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <p>{{ '_DRAWING_GRAPH_' | translate:lang }} ...</p>
+          <p>
+            <i class="fa fa-spinner fa-spin"></i>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="panelOpener" *ngIf="!graphOpen">
+  <div *ngIf="!openGraphInterface" class="panel panel-default">
+    <div class="panel-heading">{{ '_WELCOME_TO_' | translate:lang }} HERITAMUS</div>
+    <div class="panel-body">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">{{ '_BROWSE_GENERAL_GRAPH_' | translate:lang }}</div>
+            <div class="panel-body">
+              <p class="panel-text">{{ '_BROWSE_GENERAL_GRAPH_DESCRIPTION_' | translate:lang }}</p>
+              <i class="fa fa-map" aria-hidden="true"></i>
+            </div>
+            <div class="panel-footer">
+              <button (click)="generalGraphParams = true"
+                      [disabled]="generalGraphParams"
+                      class="btn btn-success btn-block">
+                {{ '_BROWSE_GENERAL_GRAPH_' | translate:lang }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="generalGraphParams" class="col-md-9">
+          <div class="panel panel-default">
+            <div class="panel-heading">{{ '_BROWSE_GENERAL_GRAPH_PARAMETERS_' | translate:lang }}</div>
+            <div *ngIf="!fetchingNodes" class="panel-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="searchNodeToStart">{{ '_SELECT_NODE_TO_START_FROM_' | translate:lang }}</label>
+                    <input type="text" (keyup)="searchStartingElement()" id="searchNodeToStart"
+                           placeholder="{{ '_SEARCH_NODE_' | translate:lang}}" class="form-control">
+                    <div *ngIf="startingNode != '' && startingNodeSelected == null" id="searchNodeToStartResults">
+                      <ul>
+                        <li *ngFor="let node of results" (click)="selectStartingElement(node)">{{ node.name }} ({{
+                          getType(node) }})
+                        </li>
+                        <li *ngIf="results.length < 1">{{ '_NO_RESULTS_' | translate:lang }}</li>
+                      </ul>
+                    </div>
+                    <div *ngIf="startingNodeSelected != null" id="searchNodeToStartResultSelected">
+                      {{ startingNodeSelected.name }} ({{ getType(startingNodeSelected) }})
+                      <a (click)="removeStartingNode()"><i class="fa fa-fw fa-lg fa-remove" aria-hidden="true"></i></a>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label id="labelNbNodesToStart" for="nbNodesToStart">{{ '_DEGREES_OF_SEPARATION_' | translate:lang
+                      }}</label>
+                    <select [ngModel]="degreesOfSeparation"
+                            id="nbNodesToStart"
+                            class="form-control"
+                            (ngModelChange)="onChangeDegrees($event)">
+                      <option [ngValue]="i" *ngFor="let i of degreesOptions">{{ i }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="fetchingNodes" class="panel-body graph-drawing">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-body">
+                                      <p style="text-align:center;">{{ '_FETCHING_NODES_' | translate:lang }} ...</p>
+                                      <p style="text-align:center;">
+                                          <i class="fa fa-spinner fa-spin"></i>
+                                      </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-footer text-right">
+              <button (click)="showGeneralGraph()"
+                      class="btn btn-info"
+                      [disabled]="startingNodeSelected == null">
+                {{ '_BROWSE_GENERAL_GRAPH_PART_' | translate:lang }}
+              </button>
+              <a (click)="generalGraphParams = false" class="btn btn-default">{{ '_CLOSE_' | translate:lang }}</a>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!generalGraphParams" class="col-md-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">{{ '_START_NEW_GRAPH_' | translate:lang }}</div>
+            <div class="panel-body">
+              <p class="panel-text">{{ '_START_NEW_GRAPH_DESCRIPTION_' | translate:lang }}</p>
+              <i class="fa fa-code-fork" aria-hidden="true"></i>
+            </div>
+            <div class="panel-footer">
+              <button *ngIf="auth.loggedIn"
+                      (click)="createGraph()"
+                      class="btn btn-success btn-block wrap-word">
+                {{ '_CREATE_NEW_GRAPH_' | translate:lang }}
+              </button>
+              <button *ngIf="!auth.loggedIn"
+                      routerLink="/home/login"
+                      class="btn btn-warning btn-block wrap-word">
+                {{ '_DO_LOGIN_' | translate:lang }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!generalGraphParams" class="col-md-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">{{ '_OPEN_GRAPH_' | translate:lang }}</div>
+            <div class="panel-body">
+              <p class="panel-text">{{ '_OPEN_GRAPH_DESCRIPTION_' | translate:lang }}</p>
+              <i class="fa fa-folder-open" aria-hidden="true"></i>
+            </div>
+            <div class="panel-footer">
+              <button *ngIf="auth.loggedIn"
+                      (click)="openGraph()"
+                      class="btn btn-success btn-block wrap-word">
+                {{ '_OPEN_GRAPH_' | translate:lang }}
+              </button>
+              <button *ngIf="!auth.loggedIn"
+                      routerLink="/home/login"
+                      class="btn btn-warning btn-block wrap-word">
+                {{ '_DO_LOGIN_' | translate:lang }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!generalGraphParams" class="col-md-3">
+          <div class="panel panel-default">
+            <div class="panel-heading">{{ '_IMPORT_GRAPH_' | translate:lang }}</div>
+            <div class="panel-body">
+              <p class="panel-text">{{ '_IMPORT_GRAPH_DESCRIPTION_' | translate:lang }}</p>
+              <i class="fa fa-upload" aria-hidden="true"></i>
+            </div>
+            <div class="panel-footer">
+              <button *ngIf="auth.loggedIn"
+                      (click)="importGraphBtn()"
+                      class="btn btn-success btn-block wrap-word">
+                {{ '_IMPORT_GRAPH_' | translate:lang }}
+              </button>
+              <button *ngIf="!auth.loggedIn"
+                      routerLink="/home/login"
+                      class="btn btn-warning btn-block wrap-word">
+                {{ '_DO_LOGIN_' | translate:lang }}
+              </button>
+              <input type="file" accept=".json, .xml" style="display:none" id="openedFile" (change)="importGraph()">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="openGraphInterface" id="openGraphInterface" class="panel panel-default" style="margin-top:3px;">
+    <div class="panel-heading">
+      {{ '_SAVED_GRAPHS_' | translate:lang }}
+      <span class="opener-back"><a (click)="closeGraph()">{{ '_RETURN_SELECTION_' | translate:lang }} <i
+          class="fa fa-arrow-right" aria-hidden="true"></i></a></span>
+    </div>
+    <div class="panel-body">
+      <div class="row">
+        <div class="col-md-12">
+          <p *ngIf="savedGraphs.length == 0">{{ '_NO_SAVED_GRAPH_' | translate:lang }}</p>
+          <accordion *ngIf="savedGraphs.length > 0" [closeOthers]="oneAtATime">
+            <accordion-group *ngFor="let savedGraph of savedGraphs" [heading]="calculateHeader(savedGraph)">
+              <table class="table table-hover">
+                <thead>
+                <tr>
+                  <th class="text-center">{{ '_DATE_' | translate:lang }}</th>
+                  <th class="text-center">{{ '_REVISION_' | translate:lang }}</th>
+                  <th class="text-center">{{ '_STATE_' | translate:lang }}</th>
+                  <th class="text-center">{{ '_ACTIONS_' | translate:lang }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr *ngFor="let s of savedGraphsList[savedGraph.uuid]">
+                  <td class="text-center">{{ s.created | date: 'dd/MM/yyyy HH:mm' }}</td>
+                  <td class="text-center">{{ s.revision }}</td>
+                  <td class="text-center capitalize">{{ s.state }} <span
+                      *ngIf="s.state == 'reviewed' && s.comment != ''">(<a popover="{{ s.comment }}"
+                                                                           popoverTitle="{{ '_COMMENT_BY_REVIEWER_' | translate:lang }}">{{ '_READ_REVIEWER_COMMENT_' | translate:lang }}</a>)</span>
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group" role="group">
+                      <button class="btn btn-sm btn-default" (click)="openLoadedGraph(s)">
+                        <i class="fa fa-folder-open"></i>
+                      </button>
+                      <button class="btn btn-sm btn-danger" (click)="deleteLoadedGraph(s)">
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </accordion-group>
+          </accordion>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

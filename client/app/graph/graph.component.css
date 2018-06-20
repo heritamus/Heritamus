@@ -1,0 +1,9 @@
+.panel-text {
+  min-height: 55px;
+}
+
+.btn-center {
+  position: absolute;
+  bottom: 0.7%;
+  left: 0.5%;
+}

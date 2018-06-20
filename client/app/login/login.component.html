@@ -1,0 +1,22 @@
+<app-toast [message]="toast.message"></app-toast>
+
+<div class="login-form main-forms">
+  <form [formGroup]="loginForm" (ngSubmit)="login()">
+    <img id="profile-img" class="profile-img-card" src="./assets/logo.png" />
+    <h3>{{ '_LOGIN_TO_' | translate:lang }} HeritaMus</h3>
+
+    <div class="form-group" [class.has-error]="email.touched && email.invalid">
+      <input class="form-control" type="email" name="email" formControlName="email" placeholder="{{ '_EMAIL_' | translate:lang }}" autofocus required>
+    </div>
+
+    <div class="form-group">
+      <input class="form-control" type="password" name="password" formControlName="password" placeholder="{{ '_PASSWORD_' | translate:lang }}" required>
+    </div>
+
+    <div class="form-group">
+      <button type="submit" [disabled]="!loginForm.valid" class="btn btn-block btn-primary">{{ '_LOGIN_' | translate:lang }}</button>
+    </div>
+
+    <a routerLink="/home/register">{{ '_CREATE_NEW_ACCOUNT_' | translate:lang }}</a>
+  </form>
+</div>

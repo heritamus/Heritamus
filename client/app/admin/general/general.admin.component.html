@@ -1,0 +1,59 @@
+<app-loading [condition]="isLoading"></app-loading>
+
+<div class="col-md-6">
+  <div class="panel panel-info">
+    <div class="panel-heading">
+      {{ '_STATISTICS_' | translate:lang }}
+    </div>
+    <div class="panel-body">
+      <p>{{ '_TOTAL_NUMBER_OF_NODES_' | translate:lang }}: <strong>{{ nbNodes }}</strong></p>
+      <p>{{ '_TOTAL_NUMBER_OF_RELATIONS_' | translate:lang }}: <strong>{{ nbRelations }}</strong></p>
+      <p>{{ '_MOST_CONNECTED_NODES_' | translate:lang }}:</p>
+      <table class="table table-hover">
+        <tbody>
+        <tr>
+          <td style="border-top: 0;" >
+            <span *ngFor="let node of mostUsedNodes">
+              <p style="margin:0"><strong>{{ node.name }}</strong> ({{ getType(node) }}) </p><br/>
+            </span>
+          </td>
+          <td style="border-top: 0;" >
+            <span *ngFor="let cnt of nbRelConnected">
+              <p style="margin:0">
+                {{ '_CONNECTED_' | translate:lang }}
+                <strong>{{ cnt }}</strong>
+                {{ '_TIMES_' | translate:lang }}
+              </p><br/>
+            </span>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="col-md-6">
+  <div class="panel panel-danger">
+    <div class="panel-heading">
+      {{ '_DELETE_NODE_FROM_GENERAL_GRAPH_' | translate:lang }}
+    </div>
+    <div class="panel-body">
+      <p>{{ '_DELETE_NODE_FROM_GENERAL_GRAPH_DESC_' | translate:lang }}</p>
+      <div class="form-group">
+        <label for="searchNodeToDelete">{{ '_SELECT_NODE_TO_DELETE_' | translate:lang }}</label>
+        <input type="text" (keyup)="searchDeletingNode()" id="searchNodeToDelete" placeholder="{{ '_SEARCH_NODE_' | translate:lang}}" class="form-control">
+        <div *ngIf="nodeToDelete != '' && nodeToDeleteSelected == null" id="searchNodeToDeleteResults">
+          <ul>
+            <li *ngFor="let node of results" (click)="selectDeletingNode(node)">{{ node.name }} ({{ getType(node) }})</li>
+            <li *ngIf="results.length < 1">{{ '_NO_RESULTS_' | translate:lang }}</li>
+          </ul>
+        </div>
+        <div *ngIf="nodeToDeleteSelected != null" id="searchNodeToDeleteResultSelected">
+          {{ nodeToDeleteSelected.name }} ({{ getType(nodeToDeleteSelected) }})
+          <a (click)="removeDeletingNode()"><i class="fa fa-fw fa-lg fa-remove" aria-hidden="true"></i></a>
+        </div>
+        <a *ngIf="nodeToDeleteSelected != null" id="deleteNodeButton" (click)="deleteNode()" class="btn btn-danger">{{ '_DELETE_THIS_NODE_' | translate:lang }}</a>
+      </div>
+    </div>
+  </div>
+</div>

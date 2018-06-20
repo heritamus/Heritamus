@@ -1,0 +1,128 @@
+<app-loading [condition]="isLoading"></app-loading>
+
+<div class="col-sm-12">
+  <h4>{{ '_GRAPHS_TO_REVIEW_' | translate:lang }} : {{ graphs.length }}</h4>
+  <table class="table table-bordered table-striped">
+    <thead class="thead-default">
+    <tr>
+      <th class="col-md-1">{{ '_DATE_' | translate:lang }}</th>
+      <th class="col-md-2">{{ '_NAME_' | translate:lang }}</th>
+      <th class="col-md-2">{{ '_AUTHOR_' | translate:lang }}</th>
+      <th class="col-md-5">{{ '_COMMENT_' | translate:lang }}</th>
+      <th class="col-md-2">{{ '_ACTIONS_' | translate:lang }}</th>
+    </tr>
+    </thead>
+    <tbody *ngIf="graphs.length === 0">
+    <tr>
+      <td colspan="5">{{ '_NO_GRAPH_TO_REVIEW_' | translate:lang }}</td>
+    </tr>
+    </tbody>
+    <tbody *ngIf="graphs.length > 0">
+    <tr *ngFor="let graph of graphs">
+      <td>{{ graph.created | date: 'dd/MM/yyyy' }}</td>
+      <td>{{ graph.name }}</td>
+      <td>{{ getGraphAuthor(graph.user) }}</td>
+      <td>{{ graph.comment }}</td>
+      <td>
+        <div class="btn-group" role="group">
+          <button class="btn btn-sm btn-default" (click)="reviewGraph(graph);">
+            <i class="fa fa-edit"></i>
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="deleteGraphReview(graph)">
+            <i class="fa fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
+<div *ngIf="modalReview == true" class="modal-bg"></div>
+
+<div *ngIf="modalReview == true" class="modal modal-open" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">{{ '_REVIEWING_GRAPH_' | translate:lang }}</h4>
+        <button type="button" class="close pull-right" (click)="modalReview = false" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="row" *ngIf="loadingDiff == true">
+          <div class="col-md-12 text-center">
+            <p><img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif"></p>
+            <h4>{{ '_LOADING_DIFFERENCES_' | translate:lang }}</h4>
+            <h5>{{ '_WAIT_OR_CLOSE_' | translate:lang }}</h5>
+          </div>
+        </div>
+        <div class="row" *ngIf="loadingDiff == false">
+          <div class="col-md-12">
+            <p><strong>{{ '_START_REVIEW_' | translate:lang }}:</strong></p>
+            <p>{{ '_EXPLAIN_REVIEW_' | translate:lang }}:
+              <button class="btn disabled btn-sm btn-default"><i class="fa fa-check"></i></button>
+              {{ '_EXPLAIN_REVIEW_ACCEPT_' | translate:lang }},
+              <button class="btn disabled btn-sm btn-default"><i class="fa fa-times"></i></button>
+              {{ '_EXPLAIN_REVIEW_DECLINE_' | translate:lang }}.
+            </p>
+            <table class="table table-hover table-bordered">
+              <thead>
+              <tr>
+                <th class="text-center">Modification</th>
+                <th class="text-center">Action</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr *ngFor="let nr of nodesDiffAdded" [class.success]="nr.state == 'toMerge'"
+                  [class.danger]="nr.state == 'toNotMerge'">
+                <td>{{ '_NODE_ADDED_' | translate:lang }} : <strong>{{ nr.n.name }}</strong></td>
+                <td class="text-center">
+                  <div class="btn-group" role="group">
+                    <button [class.active]="nr.state == 'toMerge'" class="btn btn-sm btn-default"
+                            (click)="addMerge(nr, 'node')">
+                      <i class="fa fa-check"></i>
+                    </button>
+                    <button [class.active]="nr.state == 'toNotMerge'" class="btn btn-sm btn-default"
+                            (click)="removeMerge(nr, 'node')">
+                      <i class="fa fa-times"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngFor="let rr of relationsDiffAdded" [class.success]="rr.state == 'toMerge'"
+                  [class.locked]="!rr.reviewable" [class.danger]="rr.state == 'toNotMerge'">
+                <td>
+                  {{ '_RELATION_ADDED_' | translate:lang }} : <strong>{{ rr.r.sourceNode.name }}</strong> --- <strong>{{
+                  rr.r.type }}</strong> ---> <strong>{{ rr.r.targetNode.name }}</strong>
+                </td>
+                <td class="text-center">
+                  <div class="btn-group" role="group">
+                    <button *ngIf="rr.reviewable" [class.active]="rr.state == 'toMerge'" class="btn btn-sm btn-default"
+                            (click)="addMerge(rr, 'relation')">
+                      <i class="fa fa-check"></i>
+                    </button>
+                    <button [class.active]="rr.state == 'toNotMerge'" class="btn btn-sm btn-default"
+                            (click)="removeMerge(rr, 'relation')">
+                      <i class="fa fa-times"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+            <hr>
+            <p><strong>{{ '_COMMENT_REVIEW_' | translate:lang }}:</strong></p>
+            <textarea id="commentReview" (keyup)="changeComment()" class="form-control"
+                      placeholder="{{ '_COMMENT_REVIEW_PLACEHOLDER_' | translate:lang }}"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer text-right">
+        <a *ngIf="mergeable == true" (click)="reviewDone()" class="btn btn-success">{{ '_FINISH_REVIEW_' |
+          translate:lang }}</a>
+        <a class="btn btn-default" (click)="modalReview = false">{{ '_CLOSE_' | translate:lang }}</a>
+      </div>
+    </div>
+  </div>
+</div>

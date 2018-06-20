@@ -1,0 +1,37 @@
+<app-loading [condition]="isLoading"></app-loading>
+
+<div class="page-false-overlay">
+  <div class="container page-content admin-area" *ngIf="!isLoading">
+    <h3>
+      {{ '_ADMINISTRATION_AREA_' | translate:lang }}
+      <button routerLink="/app" class="leave-page btn btn-default">{{ '_LEAVE_ADMIN_AREA_' | translate:lang }}</button>
+    </h3>
+    <tabset id="tabsAdmin">
+      <tab heading="{{ '_GENERAL_GRAPH_MANAGEMENT_' | translate:lang }}">
+        <div class="row margin-top-15">
+          <app-admin-general></app-admin-general>
+        </div>
+      </tab>
+      <tab heading="{{ '_GRAPH_REVIEW_' | translate:lang }}">
+        <div class="row margin-top-15">
+          <app-admin-graphs></app-admin-graphs>
+        </div>
+      </tab>
+      <tab heading="{{ '_USERS_MANAGEMENT_' | translate:lang }}">
+        <div class="margin-top-15">
+          <app-admin-users></app-admin-users>
+        </div>
+      </tab>
+      <tab heading="{{ '_CYPHER_REQUESTS_' | translate:lang }}">
+        <div class="row margin-top-15">
+          <app-admin-requests></app-admin-requests>
+        </div>
+      </tab>
+      <tab heading="{{ '_CUSTOM_TYPES_MANAGEMENT_' | translate:lang }}">
+        <div class="row margin-top-15">
+          <app-admin-types></app-admin-types>
+        </div>
+      </tab>
+    </tabset>
+  </div>
+</div>
