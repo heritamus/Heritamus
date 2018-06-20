@@ -24,7 +24,11 @@ if (process.env.NODE_ENV === 'test') {
 }
 
 mongoose.Promise = global.Promise;
-const mongodb = mongoose.connect(mongodbURI, { useMongoClient: true });
+const mongodb = mongoose.connect(mongodbURI, { 
+  user: "heritamus",
+  pass: "secret",
+  useMongoClient: true
+});
 
 mongodb
   .then((db) => {

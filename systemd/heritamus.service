@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/Heritamus
-ExecStart=/usr/bin/npm run prod
+ExecStart=/usr/local/bin/npm run prod
 Restart=on-failure
 Environment=NODE_ENV=production
 

@@ -5,7 +5,7 @@
 
 ## Run
 ### Development mode
-`npm run dev`: [concurrently](https://github.com/kimmobrunfeldt/concurrently) execute MongoDB, Angular build, TypeScript compiler and Express server.
+`npm run dev`: [concurrently](https://github.com/kimmobrunfeldt/concurrently) execute Angular build, TypeScript compiler and Express server.
 
 Open your browser and go to [localhost:4200](http://localhost:4200).
 
@@ -13,8 +13,9 @@ Angular and Express files are being watched. Any change automatically creates a 
 
 ### Production mode
 Before building the application:
-* Check and change the Neo4J url and password (`server/config/config.ts`)
-* Check and change the MongoDB url and password (`.env`)
+* Check and change the Neo4J url, login and password (`server/config/config.ts`)
+* Check and change the MongoDB url and token (`.env`)
+* Check and change the MongoDB login and password (`server/app.ts`)
 * Check and change the public server name (`nginx/heritamus.conf`)
 
 #### For a new installation:
