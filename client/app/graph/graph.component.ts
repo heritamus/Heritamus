@@ -443,6 +443,11 @@ export class GraphComponent implements OnInit {
   }
 
   exportSubmit() {
+    let name = this.getGraphName();
+    if (name === undefined || name === '') {
+      return;
+    }
+
     let jsonVal = {
       graph: {
         nodes: this.nodes.map((n: Node) => JsonNode.create(n)),
@@ -453,7 +458,7 @@ export class GraphComponent implements OnInit {
     if (this.exportFormat === 'xml') {
       // Export to XML
       let link = document.createElement('a');
-      link.download = 'save.xml';
+      link.download = `${name}.xml`;
       let options = {
         compact: true,
         spaces: 2
@@ -468,7 +473,7 @@ export class GraphComponent implements OnInit {
     } else if (this.exportFormat === 'json') {
       // Export to JSON
       let link = document.createElement('a');
-      link.download = 'save.json';
+      link.download = `${name}.json`;
       let data = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(jsonVal, null, 2));
       link.href = 'data:' + data;
       link.click();
@@ -893,23 +898,10 @@ export class GraphComponent implements OnInit {
         }
     );
 
-    let name: string;
 
     /** Si le graphe n'existe pas */
     if (!this.graphExist(this.graphCurrent)) {
-      if (name === undefined || name === '') {
-        name = prompt(this.translation.translate('_NAME_GRAPH_'), '');
-        if (name === null) {
-          return;
-        }
-        while (name.length < 5 || name.length > 30) {
-          alert(this.translation.translate('_NAME_GRAPH_RULES_'));
-          name = prompt(this.translation.translate('_NAME_GRAPH_'), '');
-          if (name === null) {
-            return;
-          }
-        }
-      }
+      let name = this.getGraphName();
       if (name === undefined || name === '') {
         return;
       }
@@ -965,6 +957,24 @@ export class GraphComponent implements OnInit {
           }
       );
     }
+  }
+
+  private getGraphName(): string {
+    let name: string;
+    if (name === undefined || name === '') {
+      name = prompt(this.translation.translate('_NAME_GRAPH_'), '');
+      if (name === null) {
+        return;
+      }
+      while (name.length < 5 || name.length > 30) {
+        alert(this.translation.translate('_NAME_GRAPH_RULES_'));
+        name = prompt(this.translation.translate('_NAME_GRAPH_'), '');
+        if (name === null) {
+          return;
+        }
+      }
+    }
+    return name
   }
 
   private normalizeName(name) {
