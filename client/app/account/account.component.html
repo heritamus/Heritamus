@@ -6,14 +6,19 @@
   <div class="container page-content" *ngIf="!isLoading">
     <div class="row">
       <div class="col-md-12">
-        <form #accountForm="ngForm" (ngSubmit)="save(user)">
+        <form [formGroup]="form" (submit)="updateUser()">
           <h3>{{ '_ACCOUNT_SETTINGS_' | translate:lang }}</h3>
           <div class="row">
             <div class="col-md-4">
               <div class="form-group">
                 <div class="offset-field inner-addon left-addon">
                   <i class="fa fa-fw fa-lg fa-user"></i>
-                  <input class="form-control" type="text" name="username" [(ngModel)]="user.username" placeholder="{{ '_USERNAME_' | translate:lang }}" required>
+                  <input class="form-control"
+                         formControlName="username"
+                         type="text"
+                         name="username"
+                         placeholder="{{ '_USERNAME_' | translate:lang }}"
+                         required>
                 </div>
               </div>
             </div>
@@ -23,7 +28,12 @@
               <div class="form-group">
                 <div class="offset-field inner-addon left-addon">
                   <i class="fa fa-fw fa-lg fa-envelope"></i>
-                  <input class="form-control" type="email" name="email" [(ngModel)]="user.email" placeholder="{{ '_EMAIL_' | translate:lang }}" required>
+                  <input class="form-control"
+                         formControlName="email"
+                         type="email"
+                         name="email"
+                         placeholder="{{ '_EMAIL_' | translate:lang }}"
+                         required>
                 </div>
               </div>
             </div>
@@ -34,7 +44,11 @@
               <div class="form-group">
                 <div class="offset-field inner-addon left-addon">
                   <i class="fa fa-fw fa-lg fa-lock"></i>
-                  <input class="form-control" type="password" name="password" [(ngModel)]="user.password" placeholder="{{ '_PASSWORD_' | translate:lang }}">
+                  <input class="form-control"
+                         formControlName="password"
+                         type="password"
+                         name="password"
+                         placeholder="{{ '_PASSWORD_' | translate:lang }}">
                 </div>
               </div>
             </div>
@@ -43,7 +57,7 @@
             </div>
           </div>
           <hr />
-          <button class="btn btn-success" type="submit" [disabled]="!accountForm.form.valid">
+          <button class="btn btn-success" type="submit" [disabled]="form.invalid">
             <i class="fa fa-save"></i> {{ '_SAVE_' | translate:lang }}
           </button>
           <button routerLink="/app" class="btn btn-default">{{ '_CLOSE_' | translate:lang }}</button>

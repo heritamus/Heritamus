@@ -22,7 +22,7 @@ export class RegisterComponent implements OnInit {
   ]);
   email = new FormControl('', [
     Validators.required,
-    Validators.minLength(3),
+    Validators.minLength(6),
     Validators.email,
     Validators.maxLength(100)
   ]);
@@ -43,18 +43,6 @@ export class RegisterComponent implements OnInit {
       email: this.email,
       password: this.password
     });
-  }
-
-  setClassUsername() {
-    return { 'has-danger': !this.username.pristine && !this.username.valid };
-  }
-
-  setClassEmail() {
-    return { 'has-danger': !this.email.pristine && !this.email.valid };
-  }
-
-  setClassPassword() {
-    return { 'has-danger': !this.password.pristine && !this.password.valid };
   }
 
   register() {

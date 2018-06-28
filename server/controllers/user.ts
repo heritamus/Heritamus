@@ -1,4 +1,5 @@
 import * as jwt from 'jsonwebtoken';
+import * as bcrypt from 'bcryptjs';
 
 import { JwtHelper } from 'angular2-jwt';
 
@@ -21,8 +22,10 @@ export default class UserCtrl extends BaseCtrl {
 
   // Update by id
   updateProtected = (req, res) => {
+    let user = new this.model(req.body);
+    this.cryptPassword(user)
     let token = req.body.token || req.query.token || req.headers['x-access-token'];
-    if (token) {
+    if (token != null) {
       jwt.verify(token, process.env.SECRET_TOKEN, (err, decoded) => {
         if(err) {
           return res.json({ success: false, message: 'Failed to authenticate token.' });
@@ -31,7 +34,7 @@ export default class UserCtrl extends BaseCtrl {
           if(!this.verifyUser(token, req.params.id)) {
             return res.status(403).send({ success: false, message: 'Not allowed to perform this action.' });
           }
-          this.model.findOneAndUpdate({ _id: req.params.id }, req.body, (err, item) => {
+          this.model.findOneAndUpdate({ _id: req.params.id }, user, (err, item) => {
             res.status(200).json(item);
           });
         }
@@ -84,6 +87,14 @@ export default class UserCtrl extends BaseCtrl {
       }
     });
     return userValid;
+  }
+
+  private cryptPassword(user) {
+    if (!user.password) {
+      return
+    }
+    let salt = bcrypt.genSaltSync(10);
+    user.password = bcrypt.hashSync(user.password, salt);
   }
 
 }

@@ -24,20 +24,8 @@ export class UserService {
     return this.http.get<User[]>('/api/users');
   }
 
-  countUsers(): Observable<number> {
-    return this.http.get<number>('/api/users/count');
-  }
-
-  addUser(user: User): Observable<User> {
-    return this.http.post<User>('/api/user', user);
-  }
-
   getUser(user: User): Observable<User> {
     return this.http.get<User>(`/api/user/${user._id}`);
-  }
-
-  getUserByID(userID: string): Observable<User> {
-    return this.http.get<User>(`/api/user/${userID}`);
   }
 
   editUser(user: User): Observable<string> {
