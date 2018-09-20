@@ -314,6 +314,7 @@ export class D3graphComponent implements OnInit {
      * @param {Node[]} nodes
      */
     private updateColorMap(nodes: Node[]) {
+        this.colorMap = new Map()
         nodes.forEach(node => {
             if (!this.colorMap.get(node.labels[0])) {
                 this.colorMap.set(node.labels[0], this.colors(this.colorMap.size));
